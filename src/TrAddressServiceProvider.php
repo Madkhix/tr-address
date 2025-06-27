@@ -27,6 +27,7 @@ class TrAddressServiceProvider extends ServiceProvider
             $this->commands([
                 \TrAddress\Console\Commands\ImportTrAddress::class,
                 \TrAddress\Console\Commands\ImportTrAddressWithFetch::class,
+                \TrAddress\Console\Commands\PublishJsonData::class,
             ]);
         }
     }

@@ -17,6 +17,12 @@ php artisan vendor:publish --provider="TrAddress\TrAddressServiceProvider" --tag
 php artisan vendor:publish --provider="TrAddress\TrAddressServiceProvider" --tag="traddress-config"
 ```
 
+> After running the Python scraper, copy the generated `tr-address-data.json` file to your Laravel project root (where the `artisan` file is located). You can also use the following artisan command to copy it automatically:
+>
+> ```bash
+> php artisan traddress:publish-json
+> ```
+
 > You can change the JSON data file path in `config/traddress.php` if needed.
 
 ## Usage
