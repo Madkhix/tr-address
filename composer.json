@@ -1,6 +1,6 @@
 {
-  "name": "tr-address/tr-address",
-  "description": "Türkiye il, ilçe, mahalle/semt ve posta kodu veritabanı ve Laravel paketi.",
+  "name": "madkhix/tr-address",
+  "description": "A Laravel package for Turkey's provinces, districts, neighborhoods, and postal codes.",
   "type": "library",
   "license": "MIT",
   "autoload": {
