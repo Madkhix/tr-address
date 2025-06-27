@@ -22,6 +22,7 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('district_id')->constrained('districts')->onDelete('cascade');
             $table->string('name');
+            $table->string('subdistrict')->nullable();
         });
 
         Schema::create('postcodes', function (Blueprint $table) {

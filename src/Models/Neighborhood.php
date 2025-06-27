@@ -8,7 +8,7 @@ use TrAddress\Models\Postcode;
 
 class Neighborhood extends Model
 {
-    protected $fillable = ['district_id', 'name'];
+    protected $fillable = ['district_id', 'name', 'subdistrict'];
     public $timestamps = false;
 
     public function district()
