@@ -1,6 +1,6 @@
 # tr-address
 
-A Laravel package for Turkey's provinces, districts, neighborhoods, and postal codes. Easily import, query, and keep up-to-date address data from PTT's official source.
+A Laravel package for Turkey's provinces, districts, neighborhoods, subdistricts, and postal codes. Easily import, query, and keep up-to-date address data from PTT's official source.
 
 ## Installation
 
@@ -24,6 +24,22 @@ php artisan vendor:publish --provider="TrAddress\TrAddressServiceProvider" --tag
 > ```
 
 > You can change the JSON data file path in `config/traddress.php` if needed.
+
+## Data Structure
+
+Neighborhoods now support a `subdistrict` (quarter) field. If your JSON data contains entries like:
+
+```json
+{
+  "name": "BEYAZEVLER MAH / MAHFESIĞMAZ / 01170"
+}
+```
+
+- `name` → "BEYAZEVLER MAH"
+- `subdistrict` → "MAHFESIĞMAZ"
+- `postcode` → "01170"
+
+The seeder will automatically parse and store these fields in the correct columns.
 
 ## Seeding the Database
 
@@ -56,6 +72,10 @@ The main seeder (`TrAddressSeeder`) will run all of these in order.
 use TrAddress\Models\City;
 
 $cities = City::all();
+
+// Access subdistrict (quarter) from a neighborhood
+$neighborhood = \TrAddress\Models\Neighborhood::first();
+echo $neighborhood->subdistrict;
 ```
 
 ## License
