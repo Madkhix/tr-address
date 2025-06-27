@@ -8,12 +8,16 @@ A Laravel package for Turkey's provinces, districts, neighborhoods, and postal c
 composer require madkhix/tr-address
 ```
 
-## Publishing Migrations and Seeders
+## Publishing Migrations, Seeders, and Config
 
 ```bash
 php artisan vendor:publish --provider="TrAddress\TrAddressServiceProvider" --tag="migrations"
+php artisan migrate
 php artisan vendor:publish --provider="TrAddress\TrAddressServiceProvider" --tag="seeders"
+php artisan vendor:publish --provider="TrAddress\TrAddressServiceProvider" --tag="traddress-config"
 ```
+
+> You can change the JSON data file path in `config/traddress.php` if needed.
 
 ## Usage
 

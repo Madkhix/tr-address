@@ -8,13 +8,13 @@ use TrAddress\Models\City;
 use TrAddress\Models\District;
 use TrAddress\Models\Neighborhood;
 use TrAddress\Models\Postcode;
-use function base_path;
 
 class TrAddressSeeder extends Seeder
 {
     public function run()
     {
-        $json = file_get_contents(base_path('tr-address-data.json'));
+        $jsonPath = config('traddress.default_json_path');
+        $json = file_get_contents($jsonPath);
         $data = json_decode($json, true);
 
         foreach ($data as $cityData) {
