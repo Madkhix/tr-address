@@ -1,21 +1,21 @@
 # tr-address
 
-Türkiye il, ilçe, mahalle/semt ve posta kodu veritabanı ve Laravel paketi.
+A Laravel package for Turkey's provinces, districts, neighborhoods, and postal codes. Easily import, query, and keep up-to-date address data from PTT's official source.
 
-## Kurulum
+## Installation
 
 ```bash
-composer require tr-address/tr-address
+composer require Madkhix/tr-address
 ```
 
-## Migration ve Seed Yayınlama
+## Publishing Migrations and Seeders
 
 ```bash
 php artisan vendor:publish --provider="TrAddress\TrAddressServiceProvider" --tag="migrations"
 php artisan vendor:publish --provider="TrAddress\TrAddressServiceProvider" --tag="seeders"
 ```
 
-## Kullanım
+## Usage
 
 ```php
 use TrAddress\Models\City;
@@ -23,5 +23,5 @@ use TrAddress\Models\City;
 $cities = City::all();
 ```
 
-## Lisans
+## License
 MIT 
