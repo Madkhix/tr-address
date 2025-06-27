@@ -5,7 +5,7 @@ A Laravel package for Turkey's provinces, districts, neighborhoods, and postal c
 ## Installation
 
 ```bash
-composer require Madkhix/tr-address
+composer require madkhix/tr-address
 ```
 
 ## Publishing Migrations and Seeders
