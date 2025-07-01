@@ -11,6 +11,7 @@ class TrAddressSeeder extends Seeder
         $this->call([
             CitySeeder::class,
             DistrictSeeder::class,
+            SubdistrictSeeder::class,
             NeighborhoodSeeder::class,
             PostcodeSeeder::class,
         ]);
