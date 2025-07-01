@@ -21,7 +21,8 @@ class CitySeeder extends Seeder
         try {
             DB::beginTransaction();
             foreach ($data as $cityData) {
-                City::create(['name' => $cityData['name']]);
+                $cityName = preg_replace('/\s*\(.*?\)/', '', $cityData['name']);
+                City::create(['name' => trim($cityName)]);
                 $inserted++;
                 $this->command->getOutput()->progressAdvance();
             }

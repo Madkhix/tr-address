@@ -29,9 +29,10 @@ class DistrictSeeder extends Seeder
             foreach ($data as $cityData) {
                 $city = City::firstOrCreate(['name' => $cityData['name']]);
                 foreach ($cityData['districts'] as $districtData) {
+                    $districtName = preg_replace('/\s*\(.*?\)/', '', $districtData['name']);
                     District::create([
                         'city_id' => $city->id,
-                        'name' => $districtData['name'],
+                        'name' => trim($districtName),
                     ]);
                     $inserted++;
                     $this->command->getOutput()->progressAdvance();
