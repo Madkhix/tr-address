@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use TrAddress\Models\City;
 use TrAddress\Models\District;
+use Illuminate\Support\Facades\DB;
 
 class DistrictSeeder extends Seeder
 {
@@ -22,18 +23,26 @@ class DistrictSeeder extends Seeder
         $this->command->info("Seeding districts...");
         $this->command->getOutput()->progressStart($total);
 
-        foreach ($data as $cityData) {
-            $city = City::firstOrCreate(['name' => $cityData['name']]);
-            foreach ($cityData['districts'] as $districtData) {
-                District::create([
-                    'city_id' => $city->id,
-                    'name' => $districtData['name'],
-                ]);
-                $this->command->getOutput()->progressAdvance();
+        $inserted = 0;
+        try {
+            DB::beginTransaction();
+            foreach ($data as $cityData) {
+                $city = City::firstOrCreate(['name' => $cityData['name']]);
+                foreach ($cityData['districts'] as $districtData) {
+                    District::create([
+                        'city_id' => $city->id,
+                        'name' => $districtData['name'],
+                    ]);
+                    $inserted++;
+                    $this->command->getOutput()->progressAdvance();
+                }
             }
+            DB::commit();
+            $this->command->getOutput()->progressFinish();
+            $this->command->info("Districts seeding completed! Total: $inserted");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->command->error('District seeding failed: ' . $e->getMessage());
         }
-
-        $this->command->getOutput()->progressFinish();
-        $this->command->info("Districts seeding completed!");
     }
 } 

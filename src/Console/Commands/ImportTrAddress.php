@@ -7,6 +7,8 @@ use TrAddress\Models\City;
 use TrAddress\Models\District;
 use TrAddress\Models\Neighborhood;
 use TrAddress\Models\Postcode;
+use TrAddress\Models\Subdistrict;
+use Illuminate\Support\Facades\DB;
 
 class ImportTrAddress extends Command
 {
@@ -27,28 +29,48 @@ class ImportTrAddress extends Command
             return 1;
         }
         $this->info('Starting data import...');
-        foreach ($data as $cityData) {
-            $city = City::create(['name' => $cityData['name']]);
-            foreach ($cityData['districts'] as $districtData) {
-                $district = District::create([
-                    'city_id' => $city->id,
-                    'name' => $districtData['name'],
-                ]);
-                foreach ($districtData['neighborhoods'] as $neighborhoodData) {
-                    $neighborhood = Neighborhood::create([
-                        'district_id' => $district->id,
-                        'name' => $neighborhoodData['name'],
+        $cityCount = $districtCount = $subdistrictCount = $neighborhoodCount = $postcodeCount = 0;
+        try {
+            DB::beginTransaction();
+            foreach ($data as $cityData) {
+                $city = City::create(['name' => $cityData['name']]);
+                $cityCount++;
+                foreach ($cityData['districts'] as $districtData) {
+                    $district = District::create([
+                        'city_id' => $city->id,
+                        'name' => $districtData['name'],
                     ]);
-                    foreach ($neighborhoodData['postcodes'] as $code) {
-                        Postcode::create([
-                            'neighborhood_id' => $neighborhood->id,
-                            'code' => $code,
+                    $districtCount++;
+                    foreach ($districtData['quarters'] as $quarterData) {
+                        $subdistrict = Subdistrict::create([
+                            'district_id' => $district->id,
+                            'name' => $quarterData['name'],
                         ]);
+                        $subdistrictCount++;
+                        foreach ($quarterData['neighborhoods'] as $neighborhoodData) {
+                            $neighborhood = Neighborhood::create([
+                                'district_id' => $district->id,
+                                'subdistrict_id' => $subdistrict->id,
+                                'name' => $neighborhoodData['name'],
+                            ]);
+                            $neighborhoodCount++;
+                            Postcode::create([
+                                'neighborhood_id' => $neighborhood->id,
+                                'code' => $neighborhoodData['postcode'],
+                            ]);
+                            $postcodeCount++;
+                        }
                     }
                 }
             }
+            DB::commit();
+            $this->info("Data import completed!");
+            $this->info("Cities: $cityCount, Districts: $districtCount, Subdistricts: $subdistrictCount, Neighborhoods: $neighborhoodCount, Postcodes: $postcodeCount");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->error('Import failed: ' . $e->getMessage());
+            return 1;
         }
-        $this->info('Data import completed!');
         return 0;
     }
 } 

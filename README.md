@@ -1,6 +1,6 @@
 # tr-address
 
-A Laravel package for Turkey's provinces, districts, subdistricts (quarters), neighborhoods, and postal codes. Easily import, query, and keep up-to-date address data from PTT's official source.
+A Laravel package for Turkey's provinces, districts, quarters (subdistricts), neighborhoods, and postal codes. Easily import, query, and keep up-to-date address data from https://www.postakodu.web.tr/ official source.
 
 ## Installation
 
@@ -22,15 +22,44 @@ php artisan vendor:publish --provider="TrAddress\TrAddressServiceProvider" --tag
 > ```bash
 > php artisan traddress:publish-json
 > ```
-
+>
 > You can change the JSON data file path in `config/traddress.php` if needed.
+
+## Data Structure
+
+The JSON data must have the following structure:
+
+```json
+[
+  {
+    "name": "ADANA",
+    "districts": [
+      {
+        "name": "ALADAĞ",
+        "quarters": [
+          {
+            "name": "KARSANTI",
+            "neighborhoods": [
+              { "name": "MANSURLU MAH.", "postcode": "01720" }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]
+```
+- `cities` have many `districts`
+- `districts` have many `quarters` (subdistricts)
+- `quarters` have many `neighborhoods`
+- Each `neighborhood` has a `postcode`
 
 ## Migration Structure
 
 Each table has its own migration file:
 - `cities`
 - `districts`
-- `subdistricts`
+- `subdistricts` (quarters)
 - `neighborhoods`
 - `postcodes`
 
@@ -40,7 +69,7 @@ You can run all migrations at once:
 php artisan migrate
 ```
 
-Or migrate a specific table (advanced usage):
+Or, to run a specific migration file (advanced usage):
 
 ```bash
 php artisan migrate --path=src/database/migrations/2024_01_03_000000_create_subdistricts_table.php
@@ -51,8 +80,8 @@ php artisan migrate --path=src/database/migrations/2024_01_03_000000_create_subd
 Each table has its own seeder:
 - `CitySeeder`
 - `DistrictSeeder`
-- `SubdistrictSeeder` (**independent, only seeds subdistricts**)
-- `NeighborhoodSeeder` (**does not create subdistricts, only links to them**)
+- `SubdistrictSeeder` (seeds all quarters)
+- `NeighborhoodSeeder` (seeds all neighborhoods and links to subdistricts)
 - `PostcodeSeeder`
 - `TrAddressSeeder` (runs all in order)
 
@@ -62,48 +91,33 @@ Seed all data:
 php artisan db:seed --class=Database\Seeders\TrAddressSeeder
 ```
 
-Or seed a specific table:
-
-```bash
-php artisan db:seed --class=Database\Seeders\SubdistrictSeeder
-php artisan db:seed --class=Database\Seeders\NeighborhoodSeeder
-```
-
 > **Note:**
 > - Run `SubdistrictSeeder` before `NeighborhoodSeeder` if you seed them separately.
 > - `NeighborhoodSeeder` will not create subdistricts, only link to existing ones.
+
+## Importing Data
+
+After generating or updating your `tr-address-data.json` file, import it with:
+
+```bash
+php artisan traddress:import tr-address-data.json
+```
 
 ## Usage
 
 ```php
 use TrAddress\Models\City;
+use TrAddress\Models\District;
 use TrAddress\Models\Subdistrict;
 use TrAddress\Models\Neighborhood;
+use TrAddress\Models\Postcode;
 
 $cities = City::all();
-$subdistricts = Subdistrict::where('district_id', $districtId)->get();
-$neighborhoods = Neighborhood::where('subdistrict_id', $subdistrictId)->get();
+$districts = $cities[0]->districts;
+$quarters = $districts[0]->subdistricts; // quarters
+$neighborhoods = $quarters[0]->neighborhoods;
+$postcode = $neighborhoods[0]->postcodes->first()->code;
 ```
-
-## Data Structure
-
-The package uses a normalized structure:
-- `subdistricts` table for quarters (semt), linked to districts
-- `neighborhoods` table links to subdistricts via `subdistrict_id`
-
-If your JSON data contains entries like:
-
-```json
-{
-  "name": "BEYAZEVLER MAH / MAHFESIĞMAZ / 01170"
-}
-```
-
-- `name` → "BEYAZEVLER MAH"
-- `subdistrict` → "MAHFESIĞMAZ" (stored in subdistricts table)
-- `postcode` → "01170"
-
-The seeders will automatically parse and store these fields in the correct tables and columns.
 
 ## Updating Address Data (Fetching from PTT)
 

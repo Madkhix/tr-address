@@ -8,6 +8,7 @@ use TrAddress\Models\District;
 use TrAddress\Models\Neighborhood;
 use TrAddress\Models\Postcode;
 use TrAddress\Models\Subdistrict;
+use Illuminate\Support\Facades\DB;
 
 class PostcodeSeeder extends Seeder
 {
@@ -20,8 +21,8 @@ class PostcodeSeeder extends Seeder
         $total = 0;
         foreach ($data as $cityData) {
             foreach ($cityData['districts'] as $districtData) {
-                foreach ($districtData['neighborhoods'] as $neighborhoodData) {
-                    $total += count($neighborhoodData['postcodes']);
+                foreach ($districtData['quarters'] as $quarterData) {
+                    $total += count($quarterData['neighborhoods']);
                 }
             }
         }
@@ -29,41 +30,54 @@ class PostcodeSeeder extends Seeder
         $this->command->info("Seeding postcodes...");
         $this->command->getOutput()->progressStart($total);
 
-        foreach ($data as $cityData) {
-            $city = City::firstOrCreate(['name' => $cityData['name']]);
-            foreach ($cityData['districts'] as $districtData) {
-                $district = District::firstOrCreate([
-                    'city_id' => $city->id,
-                    'name' => $districtData['name'],
-                ]);
-                foreach ($districtData['neighborhoods'] as $neighborhoodData) {
-                    $parts = array_map('trim', explode('/', $neighborhoodData['name']));
-                    $neighborhoodName = $parts[0] ?? null;
-                    $subdistrictName = $parts[1] ?? null;
-                    $subdistrict = null;
-                    if ($subdistrictName) {
+        $batch = [];
+        $batchSize = 500;
+        $inserted = 0;
+        try {
+            DB::beginTransaction();
+            foreach ($data as $cityData) {
+                $city = City::firstOrCreate(['name' => $cityData['name']]);
+                foreach ($cityData['districts'] as $districtData) {
+                    $district = District::firstOrCreate([
+                        'city_id' => $city->id,
+                        'name' => $districtData['name'],
+                    ]);
+                    foreach ($districtData['quarters'] as $quarterData) {
                         $subdistrict = Subdistrict::firstOrCreate([
                             'district_id' => $district->id,
-                            'name' => $subdistrictName,
+                            'name' => $quarterData['name'],
                         ]);
-                    }
-                    $neighborhood = Neighborhood::firstOrCreate([
-                        'district_id' => $district->id,
-                        'subdistrict_id' => $subdistrict ? $subdistrict->id : null,
-                        'name' => $neighborhoodName,
-                    ]);
-                    foreach ($neighborhoodData['postcodes'] as $code) {
-                        Postcode::create([
-                            'neighborhood_id' => $neighborhood->id,
-                            'code' => $code,
-                        ]);
-                        $this->command->getOutput()->progressAdvance();
+                        foreach ($quarterData['neighborhoods'] as $neighborhoodData) {
+                            $neighborhood = Neighborhood::firstOrCreate([
+                                'district_id' => $district->id,
+                                'subdistrict_id' => $subdistrict->id,
+                                'name' => $neighborhoodData['name'],
+                            ]);
+                            $batch[] = [
+                                'neighborhood_id' => $neighborhood->id,
+                                'code' => $neighborhoodData['postcode'],
+                            ];
+                            if (count($batch) >= $batchSize) {
+                                Postcode::insert($batch);
+                                $inserted += count($batch);
+                                $this->command->getOutput()->progressAdvance(count($batch));
+                                $batch = [];
+                            }
+                        }
                     }
                 }
             }
+            if (count($batch) > 0) {
+                Postcode::insert($batch);
+                $inserted += count($batch);
+                $this->command->getOutput()->progressAdvance(count($batch));
+            }
+            DB::commit();
+            $this->command->getOutput()->progressFinish();
+            $this->command->info("Postcodes seeding completed! Total: $inserted");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->command->error('Postcode seeding failed: ' . $e->getMessage());
         }
-
-        $this->command->getOutput()->progressFinish();
-        $this->command->info("Postcodes seeding completed!");
     }
 } 

@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use TrAddress\Models\City;
+use Illuminate\Support\Facades\DB;
 
 class CitySeeder extends Seeder
 {
@@ -16,12 +17,20 @@ class CitySeeder extends Seeder
         $this->command->info("Seeding cities...");
         $this->command->getOutput()->progressStart(count($data));
 
-        foreach ($data as $cityData) {
-            City::create(['name' => $cityData['name']]);
-            $this->command->getOutput()->progressAdvance();
+        $inserted = 0;
+        try {
+            DB::beginTransaction();
+            foreach ($data as $cityData) {
+                City::create(['name' => $cityData['name']]);
+                $inserted++;
+                $this->command->getOutput()->progressAdvance();
+            }
+            DB::commit();
+            $this->command->getOutput()->progressFinish();
+            $this->command->info("Cities seeding completed! Total: $inserted");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->command->error('City seeding failed: ' . $e->getMessage());
         }
-
-        $this->command->getOutput()->progressFinish();
-        $this->command->info("Cities seeding completed!");
     }
 } 

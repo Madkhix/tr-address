@@ -6,6 +6,7 @@ use Illuminate\Database\Seeder;
 use TrAddress\Models\City;
 use TrAddress\Models\District;
 use TrAddress\Models\Subdistrict;
+use Illuminate\Support\Facades\DB;
 
 class SubdistrictSeeder extends Seeder
 {
@@ -18,32 +19,37 @@ class SubdistrictSeeder extends Seeder
         $subdistrictNames = [];
         foreach ($data as $cityData) {
             foreach ($cityData['districts'] as $districtData) {
-                foreach ($districtData['neighborhoods'] as $neighborhoodData) {
-                    $parts = array_map('trim', explode('/', $neighborhoodData['name']));
-                    $subdistrictName = $parts[1] ?? null;
-                    if ($subdistrictName) {
-                        $subdistrictNames[$districtData['name'] . '|' . $subdistrictName] = [
-                            'district_name' => $districtData['name'],
-                            'subdistrict_name' => $subdistrictName,
-                        ];
-                    }
+                foreach ($districtData['quarters'] as $quarterData) {
+                    $subdistrictNames[$districtData['name'] . '|' . $quarterData['name']] = [
+                        'district_name' => $districtData['name'],
+                        'subdistrict_name' => $quarterData['name'],
+                    ];
                 }
             }
         }
         $total = count($subdistrictNames);
         $this->command->info("Seeding subdistricts...");
         $this->command->getOutput()->progressStart($total);
-        foreach ($subdistrictNames as $key => $info) {
-            $district = District::where('name', $info['district_name'])->first();
-            if ($district) {
-                Subdistrict::firstOrCreate([
-                    'district_id' => $district->id,
-                    'name' => $info['subdistrict_name'],
-                ]);
+        $inserted = 0;
+        try {
+            DB::beginTransaction();
+            foreach ($subdistrictNames as $key => $info) {
+                $district = District::where('name', $info['district_name'])->first();
+                if ($district) {
+                    Subdistrict::firstOrCreate([
+                        'district_id' => $district->id,
+                        'name' => $info['subdistrict_name'],
+                    ]);
+                    $inserted++;
+                }
+                $this->command->getOutput()->progressAdvance();
             }
-            $this->command->getOutput()->progressAdvance();
+            DB::commit();
+            $this->command->getOutput()->progressFinish();
+            $this->command->info("Subdistricts seeding completed! Total: $inserted");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->command->error('Subdistrict seeding failed: ' . $e->getMessage());
         }
-        $this->command->getOutput()->progressFinish();
-        $this->command->info("Subdistricts seeding completed!");
     }
 } 
