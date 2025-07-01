@@ -33,25 +33,15 @@ class SubdistrictSeeder extends Seeder
         $total = count($subdistrictNames);
         $this->command->info("Seeding subdistricts...");
         $this->command->getOutput()->progressStart($total);
-        foreach ($data as $cityData) {
-            $city = City::firstOrCreate(['name' => $cityData['name']]);
-            foreach ($cityData['districts'] as $districtData) {
-                $district = District::firstOrCreate([
-                    'city_id' => $city->id,
-                    'name' => $districtData['name'],
+        foreach ($subdistrictNames as $key => $info) {
+            $district = District::where('name', $info['district_name'])->first();
+            if ($district) {
+                Subdistrict::firstOrCreate([
+                    'district_id' => $district->id,
+                    'name' => $info['subdistrict_name'],
                 ]);
-                foreach ($districtData['neighborhoods'] as $neighborhoodData) {
-                    $parts = array_map('trim', explode('/', $neighborhoodData['name']));
-                    $subdistrictName = $parts[1] ?? null;
-                    if ($subdistrictName) {
-                        Subdistrict::firstOrCreate([
-                            'district_id' => $district->id,
-                            'name' => $subdistrictName,
-                        ]);
-                        $this->command->getOutput()->progressAdvance();
-                    }
-                }
             }
+            $this->command->getOutput()->progressAdvance();
         }
         $this->command->getOutput()->progressFinish();
         $this->command->info("Subdistricts seeding completed!");
