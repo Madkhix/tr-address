@@ -35,14 +35,17 @@ class NeighborhoodSeeder extends Seeder
                 ]);
                 foreach ($districtData['neighborhoods'] as $neighborhoodData) {
                     $parts = array_map('trim', explode('/', $neighborhoodData['name']));
-                    $neighborhoodName = $parts[0] ?? null;
-                    $subdistrictName = $parts[1] ?? null;
+                    $neighborhoodName = isset($parts[0]) ? trim($parts[0]) : null;
+                    $subdistrictName = isset($parts[1]) ? trim($parts[1]) : null;
                     $subdistrict = null;
                     if ($subdistrictName) {
-                        $subdistrict = \TrAddress\Models\Subdistrict::where([
-                            'district_id' => $district->id,
-                            'name' => $subdistrictName,
-                        ])->first();
+                        $normalizedSubdistrictName = mb_strtolower($subdistrictName);
+                        $subdistrict = \TrAddress\Models\Subdistrict::where('district_id', $district->id)
+                            ->whereRaw('LOWER(TRIM(name)) = ?', [$normalizedSubdistrictName])
+                            ->first();
+                        if (!$subdistrict) {
+                            $this->command->warn("Subdistrict not found: '" . $subdistrictName . "' (District: $district->name)");
+                        }
                     }
                     \TrAddress\Models\Neighborhood::create([
                         'district_id' => $district->id,

@@ -15,7 +15,24 @@ class SubdistrictSeeder extends Seeder
         $json = file_get_contents($jsonPath);
         $data = json_decode($json, true);
 
-        $subdistrictCount = 0;
+        $subdistrictNames = [];
+        foreach ($data as $cityData) {
+            foreach ($cityData['districts'] as $districtData) {
+                foreach ($districtData['neighborhoods'] as $neighborhoodData) {
+                    $parts = array_map('trim', explode('/', $neighborhoodData['name']));
+                    $subdistrictName = $parts[1] ?? null;
+                    if ($subdistrictName) {
+                        $subdistrictNames[$districtData['name'] . '|' . $subdistrictName] = [
+                            'district_name' => $districtData['name'],
+                            'subdistrict_name' => $subdistrictName,
+                        ];
+                    }
+                }
+            }
+        }
+        $total = count($subdistrictNames);
+        $this->command->info("Seeding subdistricts...");
+        $this->command->getOutput()->progressStart($total);
         foreach ($data as $cityData) {
             $city = City::firstOrCreate(['name' => $cityData['name']]);
             foreach ($cityData['districts'] as $districtData) {
@@ -31,11 +48,12 @@ class SubdistrictSeeder extends Seeder
                             'district_id' => $district->id,
                             'name' => $subdistrictName,
                         ]);
-                        $subdistrictCount++;
+                        $this->command->getOutput()->progressAdvance();
                     }
                 }
             }
         }
-        $this->command->info("$subdistrictCount subdistricts seeded.");
+        $this->command->getOutput()->progressFinish();
+        $this->command->info("Subdistricts seeding completed!");
     }
 } 
