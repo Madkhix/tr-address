@@ -26,7 +26,6 @@ class TrAddressServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 \TrAddress\Console\Commands\ImportTrAddress::class,
-                \TrAddress\Console\Commands\ImportTrAddressWithFetch::class,
                 \TrAddress\Console\Commands\PublishJsonData::class,
             ]);
         }
