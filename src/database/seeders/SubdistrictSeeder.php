@@ -5,10 +5,9 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use TrAddress\Models\City;
 use TrAddress\Models\District;
-use TrAddress\Models\Neighborhood;
 use TrAddress\Models\Subdistrict;
 
-class NeighborhoodSeeder extends Seeder
+class SubdistrictSeeder extends Seeder
 {
     public function run()
     {
@@ -16,16 +15,7 @@ class NeighborhoodSeeder extends Seeder
         $json = file_get_contents($jsonPath);
         $data = json_decode($json, true);
 
-        $total = 0;
-        foreach ($data as $cityData) {
-            foreach ($cityData['districts'] as $districtData) {
-                $total += count($districtData['neighborhoods']);
-            }
-        }
-
-        $this->command->info("Seeding neighborhoods...");
-        $this->command->getOutput()->progressStart($total);
-
+        $subdistrictCount = 0;
         foreach ($data as $cityData) {
             $city = City::firstOrCreate(['name' => $cityData['name']]);
             foreach ($cityData['districts'] as $districtData) {
@@ -35,26 +25,17 @@ class NeighborhoodSeeder extends Seeder
                 ]);
                 foreach ($districtData['neighborhoods'] as $neighborhoodData) {
                     $parts = array_map('trim', explode('/', $neighborhoodData['name']));
-                    $neighborhoodName = $parts[0] ?? null;
                     $subdistrictName = $parts[1] ?? null;
-                    $subdistrict = null;
                     if ($subdistrictName) {
-                        $subdistrict = \TrAddress\Models\Subdistrict::where([
+                        Subdistrict::firstOrCreate([
                             'district_id' => $district->id,
                             'name' => $subdistrictName,
-                        ])->first();
+                        ]);
+                        $subdistrictCount++;
                     }
-                    \TrAddress\Models\Neighborhood::create([
-                        'district_id' => $district->id,
-                        'subdistrict_id' => $subdistrict ? $subdistrict->id : null,
-                        'name' => $neighborhoodName,
-                    ]);
-                    $this->command->getOutput()->progressAdvance();
                 }
             }
         }
-
-        $this->command->getOutput()->progressFinish();
-        $this->command->info("Neighborhoods seeding completed!");
+        $this->command->info("$subdistrictCount subdistricts seeded.");
     }
 } 

@@ -7,6 +7,7 @@ use TrAddress\Models\City;
 use TrAddress\Models\District;
 use TrAddress\Models\Neighborhood;
 use TrAddress\Models\Postcode;
+use TrAddress\Models\Subdistrict;
 
 class PostcodeSeeder extends Seeder
 {
@@ -38,11 +39,18 @@ class PostcodeSeeder extends Seeder
                 foreach ($districtData['neighborhoods'] as $neighborhoodData) {
                     $parts = array_map('trim', explode('/', $neighborhoodData['name']));
                     $neighborhoodName = $parts[0] ?? null;
-                    $subdistrict = $parts[1] ?? null;
+                    $subdistrictName = $parts[1] ?? null;
+                    $subdistrict = null;
+                    if ($subdistrictName) {
+                        $subdistrict = Subdistrict::firstOrCreate([
+                            'district_id' => $district->id,
+                            'name' => $subdistrictName,
+                        ]);
+                    }
                     $neighborhood = Neighborhood::firstOrCreate([
                         'district_id' => $district->id,
+                        'subdistrict_id' => $subdistrict ? $subdistrict->id : null,
                         'name' => $neighborhoodName,
-                        'subdistrict' => $subdistrict,
                     ]);
                     foreach ($neighborhoodData['postcodes'] as $code) {
                         Postcode::create([
