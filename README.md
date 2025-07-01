@@ -1,6 +1,6 @@
 # tr-address
 
-A Laravel package for Turkey's provinces, districts, quarters (subdistricts), neighborhoods, and postal codes. Easily import, query, and keep up-to-date address data from https://www.postakodu.web.tr/ official source.
+A Laravel package for Turkey's provinces, districts, quarters (subdistricts), neighborhoods, and postal codes. Easily import, query, and keep up-to-date address data from https://www.postakodu.web.tr/ 
 
 ## Installation
 
