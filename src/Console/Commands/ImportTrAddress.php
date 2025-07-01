@@ -11,22 +11,22 @@ use TrAddress\Models\Postcode;
 class ImportTrAddress extends Command
 {
     protected $signature = 'traddress:import {json_path}';
-    protected $description = 'TRAddress JSON adres verisini veritabanına aktarır.';
+    protected $description = 'Import TRAddress JSON address data into the database.';
 
     public function handle()
     {
         $jsonPath = $this->argument('json_path');
         if (!file_exists($jsonPath)) {
-            $this->error("Dosya bulunamadı: $jsonPath");
+            $this->error("File not found: $jsonPath");
             return 1;
         }
         $json = file_get_contents($jsonPath);
         $data = json_decode($json, true);
         if (!$data) {
-            $this->error('JSON okunamadı veya bozuk.');
+            $this->error('JSON could not be read or is invalid.');
             return 1;
         }
-        $this->info('Veri aktarımı başlıyor...');
+        $this->info('Starting data import...');
         foreach ($data as $cityData) {
             $city = City::create(['name' => $cityData['name']]);
             foreach ($cityData['districts'] as $districtData) {
@@ -48,7 +48,7 @@ class ImportTrAddress extends Command
                 }
             }
         }
-        $this->info('Veri aktarımı tamamlandı!');
+        $this->info('Data import completed!');
         return 0;
     }
 } 
